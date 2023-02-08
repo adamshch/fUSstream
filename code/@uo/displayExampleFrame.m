@@ -11,6 +11,8 @@ function displayExampleFrame(uo, varargin)
 
 p = inputParser;                                                           % Set up an object to parse all of the various inputs
 p.addParameter('baseSelect'  , 'median');                                  % Select what criteria to calculate the baseline image as
+p.addParameter('center    '  , true    );                                  % Select whether to center the data (to the temporal per-pixel baseline)
+p.addParameter('normalize'   , true    );                                  % Select whether to normalize the data (to the temporal per-pixel baseline)
 p.addParameter('basePrctile' , 25      );                                  % For the situation that 'prctile' is chosen, which percentile should the baseline image be calculated using
 p.addParameter('frameNo'     , 'active');                                  % Select which frame display
 p.addParameter('scaleFactor' , [2,10]  );                                  % Select scaling factor for the image
@@ -33,11 +35,13 @@ p.frameNo = selectFrameNo(uo, movNorms, p.frameNo);                        % Cho
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Normalize the data to plot
 
-frameToDisp = getFrame(p.frameNo) - baseImg;                               % Subtract baseline values
-frameMode   = halfSampleMode(frameToDisp(:));
-[~,robSTD2] = robustTwoSidedSTD(frameToDisp(:));
-colorLims   = p.scaleFactor.*robSTD2;
-frameToDisp = softScale(frameToDisp, colorLims, frameMode);
+frameToDisp = getFrame(p.frameNo);                                         % Grab the appropriate frame
+if p.center;    frameToDisp = frameToDisp  - baseImg; end                  % Subtract baseline values if required
+if p.normalize; frameToDisp = frameToDisp./baseImg;   end                  % Normalize the values if required
+frameMode   = halfSampleMode(frameToDisp(:));                              % Get the mode of the current frame
+[~,robSTD2] = robustTwoSidedSTD(frameToDisp(:));                           % Compute the robust standard deviation: needed to scale the data for appropriate contrast
+colorLims   = p.scaleFactor.*robSTD2;                                      % Select the limits that will guide the contrast (proportional to robust STD)
+frameToDisp = softScale(frameToDisp, colorLims, frameMode);                % Softscale the data with a logistic to get rid of large values without severe (ugly) clipping
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Display the frame

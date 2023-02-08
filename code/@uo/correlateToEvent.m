@@ -23,6 +23,7 @@ p = p.Results;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
+
 EventShape        = uo.event2timeseries(uo, varargin);
 [eventframe, idx] = uo.event2frame(uo, events, varargin);
 
